@@ -1,0 +1,39 @@
+# Victor Synthetic Super Intelligence — Model Configuration
+# All values here can be overridden at runtime via the config dict passed
+# to VictorAgent or CognitionEngine.
+
+model:
+  name: "victor-ssi-v0.1"
+  version: "0.1.0"
+  description: "Victor Synthetic Super Intelligence — baseline configuration"
+
+cognition:
+  max_iterations: 5          # ReasoningLoop maximum iterations
+  convergence_threshold: 1.0e-4  # Early-stop delta threshold
+
+memory:
+  long_term:
+    max_entries: 10000       # Maximum LTM entries before FIFO eviction
+  episodic:
+    capacity: 1000           # Circular buffer size for episodic memory
+  vector_store:
+    dimension: null          # null = infer from first insertion
+
+training:
+  epochs: 10
+  batch_size: 32
+  log_interval: 10
+  checkpoint_dir: "checkpoints"
+  learning_rate: 1.0e-3
+  optimizer: "adam"
+
+interfaces:
+  api:
+    host: "0.0.0.0"
+    port: 8080
+  cli:
+    log_level: "WARNING"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s — %(name)s — %(levelname)s — %(message)s"
