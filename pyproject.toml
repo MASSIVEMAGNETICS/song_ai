@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "victor-ssi"
+version = "1.0.0"
+description = "Victor Synthetic Super Intelligence — modular, enterprise-grade AI agent framework"
+readme = "Victor_Synthetic_Super_Intelligence/README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Victor SSI", email = "victor@massivemagnetics.io" },
+]
+keywords = [
+    "artificial-intelligence",
+    "agent",
+    "cognition",
+    "memory",
+    "vector-store",
+    "enterprise",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+requires-python = ">=3.10"
+dependencies = []       # zero mandatory runtime dependencies
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=6.0"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[project.scripts]
+victor-cli  = "Victor_Synthetic_Super_Intelligence.interfaces.cli_interface:main"
+victor-api  = "Victor_Synthetic_Super_Intelligence.interfaces.api_server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["Victor_Synthetic_Super_Intelligence*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

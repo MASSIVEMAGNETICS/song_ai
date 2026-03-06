@@ -1,11 +1,18 @@
-# Victor Synthetic Super Intelligence — Model Configuration
-# All values here can be overridden at runtime via the config dict passed
-# to VictorAgent or CognitionEngine.
+# Victor Synthetic Super Intelligence — Model Configuration v1.0.0
+#
+# All values here can be overridden at runtime via:
+#   1. Environment variables: VICTOR_<SECTION>_<KEY>=<value>
+#      e.g. VICTOR_COGNITION_MAX_ITERATIONS=10
+#           VICTOR_INTERFACES_API_PORT=9000
+#   2. The config dict passed to VictorAgent or CognitionEngine.
+#   3. load_config(overrides={...})
+#
+# See config_loader.py for full details.
 
 model:
-  name: "victor-ssi-v0.1"
-  version: "0.1.0"
-  description: "Victor Synthetic Super Intelligence — baseline configuration"
+  name: "victor-ssi-v1"
+  version: "1.0.0"
+  description: "Victor Synthetic Super Intelligence — enterprise configuration"
 
 cognition:
   max_iterations: 5          # ReasoningLoop maximum iterations
@@ -14,6 +21,7 @@ cognition:
 memory:
   long_term:
     max_entries: 10000       # Maximum LTM entries before FIFO eviction
+    default_ttl: null        # Default TTL (seconds); null = no expiry
   episodic:
     capacity: 1000           # Circular buffer size for episodic memory
   vector_store:
@@ -31,6 +39,9 @@ interfaces:
   api:
     host: "0.0.0.0"
     port: 8080
+    rate_limit: 60           # Max requests per client per rate_window seconds
+    rate_window: 60          # Rate-limit window duration (seconds)
+    cors_origin: "*"         # Access-Control-Allow-Origin value
   cli:
     log_level: "WARNING"
 
