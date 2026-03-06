@@ -1,4 +1,16 @@
-"""CLI Interface — interactive command-line front-end for VictorAgent."""
+"""CLI Interface — interactive command-line front-end for VictorAgent.
+
+Provides a REPL (Read-Eval-Print Loop) for interacting with
+:class:`~agents.VictorAgent` from the terminal.  Supports all core agent
+operations as well as memory management and health inspection.
+
+Usage::
+
+    python -m Victor_Synthetic_Super_Intelligence.interfaces.cli_interface
+
+    # With custom log level:
+    python -m Victor_Synthetic_Super_Intelligence.interfaces.cli_interface --log-level DEBUG
+"""
 
 from __future__ import annotations
 
@@ -9,25 +21,32 @@ import sys
 from typing import Any
 
 from ..agents.victor_agent import VictorAgent
+from .. import __version__
 
 logger = logging.getLogger(__name__)
 
-_BANNER = """\
-╔══════════════════════════════════════════════╗
-║   Victor Synthetic Super Intelligence v0.1   ║
-║   Type 'help' for commands, 'exit' to quit   ║
-╚══════════════════════════════════════════════╝
+_BANNER = f"""\
+╔══════════════════════════════════════════════════════╗
+║   Victor Synthetic Super Intelligence v{__version__:<12}  ║
+║   Type 'help' for commands, 'exit' to quit           ║
+╚══════════════════════════════════════════════════════╝
 """
 
 _HELP_TEXT = """\
 Available commands
 ──────────────────
-  <text>                 Send a stimulus and receive a response.
-  remember <key> <val>   Store a value in long-term memory.
-  recall <key>           Retrieve a value from long-term memory.
-  recent [n]             Show n most recent episodes (default: 5).
-  help                   Show this help text.
-  exit / quit            Exit the CLI.
+  <text>                   Send a stimulus and receive a response.
+  remember <key> <val>     Store a value in long-term memory.
+  recall <key>             Retrieve a value from long-term memory.
+  forget <key>             Delete a key from long-term memory.
+  search <query>           Search long-term memory keys by substring.
+  recent [n]               Show n most recent episodes (default: 5).
+  health                   Display agent health and memory statistics.
+  metrics                  Display runtime metrics snapshot.
+  version                  Print version information.
+  clear                    Clear the terminal screen.
+  help                     Show this help text.
+  exit / quit              Exit the CLI.
 """
 
 
@@ -80,6 +99,9 @@ class CLIInterface:
     def _dispatch(self, line: str) -> bool:
         """Process one line of input.
 
+        Args:
+            line: The raw stripped input line.
+
         Returns:
             ``True`` if the user wants to exit.
         """
@@ -94,6 +116,25 @@ class CLIInterface:
             self._print(_HELP_TEXT)
             return False
 
+        if command == "version":
+            self._print(f"Victor SSI v{__version__}")
+            return False
+
+        if command == "clear":
+            self._print("\033[2J\033[H", end="")
+            return False
+
+        if command == "health":
+            health = self.agent.health()
+            self._print(json.dumps(health, indent=2, default=str))
+            return False
+
+        if command == "metrics":
+            from ..metrics import get_registry
+            snapshot = get_registry().snapshot()
+            self._print(json.dumps(snapshot, indent=2, default=str))
+            return False
+
         if command == "remember" and len(parts) >= 3:
             self.agent.remember(parts[1], parts[2])
             self._print(f"Stored '{parts[1]}'.")
@@ -104,9 +145,32 @@ class CLIInterface:
             self._print(f"{parts[1]}: {value!r}")
             return False
 
+        if command == "forget" and len(parts) >= 2:
+            removed = self.agent.long_term_memory.delete(parts[1])
+            if removed:
+                self._print(f"Deleted '{parts[1]}'.")
+            else:
+                self._print(f"Key '{parts[1]}' not found.")
+            return False
+
+        if command == "search" and len(parts) >= 2:
+            query = parts[1]
+            results = self.agent.long_term_memory.search(query)
+            if results:
+                for key, val in results:
+                    self._print(f"  {key}: {val!r}")
+            else:
+                self._print(f"No keys matching '{query}'.")
+            return False
+
         if command == "recent":
-            n = int(parts[1]) if len(parts) >= 2 else 5
+            try:
+                n = int(parts[1]) if len(parts) >= 2 else 5
+            except ValueError:
+                n = 5
             episodes = self.agent.episodic_memory.recent(n=n)
+            if not episodes:
+                self._print("No episodes recorded yet.")
             for ep in episodes:
                 self._print(json.dumps(ep.to_dict(), default=str))
             return False
@@ -125,8 +189,8 @@ class CLIInterface:
         self.stream_out.flush()
         return self.stream_in.readline().rstrip("\n")
 
-    def _print(self, text: str) -> None:
-        self.stream_out.write(text + "\n")
+    def _print(self, text: str, end: str = "\n") -> None:
+        self.stream_out.write(text + end)
         self.stream_out.flush()
 
     @staticmethod
@@ -138,15 +202,22 @@ class CLIInterface:
 
 def main() -> None:
     """Entry point for the CLI."""
-    parser = argparse.ArgumentParser(description="Victor SSI — CLI Interface")
+    parser = argparse.ArgumentParser(
+        description="Victor SSI — Interactive CLI",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "--log-level",
         default="WARNING",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        dest="log_level",
         help="Set logging verbosity.",
     )
     args = parser.parse_args()
-    logging.basicConfig(level=getattr(logging, args.log_level))
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+    )
 
     CLIInterface().run()
 
